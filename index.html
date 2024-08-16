@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sheng Shen - Academic Profile</title>
+    <title>Shen Sheng - Academic Profile</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
@@ -17,6 +17,10 @@
             margin-bottom: 20px;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://geoip-js.com/js/apis/geoip2/v2.1/geoip2.js"></script>
 </head>
 <body>
     <div class="container">
@@ -62,6 +66,11 @@
                 </ul>
             </section>
             <section>
+                <h2>Visitor Statistics</h2>
+                <p>Total Visitors: <span id="visitor-count">0</span></p>
+                <div id="map" style="height: 500px;"></div>
+            </section>
+            <section>
                 <h2>Contact</h2>
                 <p>Email: codyshens@tju.edu.cn</p>
             </section>
@@ -72,5 +81,43 @@
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([0, 0], 2); // Centered at [0, 0] with zoom level 2
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Initialize visitor count
+        var visitorCount = 0;
+        
+        // Function to update visitor count
+        function updateVisitorCount() {
+            visitorCount += 1;
+            $('#visitor-count').text(visitorCount);
+        }
+        
+        // Function to add marker to map based on location
+        function addMarker(lat, lon, city) {
+            L.marker([lat, lon]).addTo(map)
+                .bindPopup('Visitor from ' + city)
+                .openPopup();
+        }
+        
+        // Use GeoIP to get visitor's location
+        geoip2.city(function(response) {
+            var lat = response.location.latitude;
+            var lon = response.location.longitude;
+            var city = response.city.names.en;
+        
+            // Update visitor count and add marker to map
+            updateVisitorCount();
+            addMarker(lat, lon, city);
+        }, function(error) {
+            console.log('Could not get location: ', error);
+        });
+    </script>
 </body>
 </html>
