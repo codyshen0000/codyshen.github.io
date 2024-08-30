@@ -17,6 +17,9 @@
         main {
             margin-bottom: 20px;
         }
+        #map {
+            height: 400px;
+        }
     </style>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
@@ -66,10 +69,7 @@
             </section>
             <section>
                 <h2>Visitor Statistics</h2>
-                <p id="visitor-ip">IP: Loading...</p>
-                <p id="visitor-location">Location: Loading...</p>
-                <p id="visitor-count">Total Visits: Loading...</p>
-                <div id="map" style="height: 400px;"></div>
+                <div id="map"></div>
             </section>
             <section>
                 <h2>Contact</h2>
@@ -83,7 +83,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.min.js"></script>
     <script>
-        var map = L.map('map').setView([0, 0], 2); // Initialize map at [0, 0] with zoom level 2
+        var map = L.map('map').setView([20, 0], 2); // Initialize map centered at [20, 0] with zoom level 2
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -92,30 +92,33 @@
         $(document).ready(function () {
             // Use ipinfo.io API to get visitor IP and location
             $.get("https://ipinfo.io?token=0b130fa67909e2", function (response) {
-                var ip = response.ip;
                 var city = response.city;
                 var region = response.region;
                 var country = response.country;
                 var loc = response.loc.split(','); // Split into latitude and longitude
-                var lat = loc[0];
-                var lon = loc[1];
-    
-                // Display visitor IP and location
-                $('#visitor-ip').text('IP: ' + ip);
-                $('#visitor-location').text('Location: ' + city + ', ' + region + ', ' + country);
-    
-                // Update map with visitor location
-                map.setView([lat, lon], 10); // Update map view
+                var lat = parseFloat(loc[0]);
+                var lon = parseFloat(loc[1]);
+
+                // Save visitor location to localStorage for simplicity (for demo purpose only)
+                // You should save this data to a backend service for persistent storage
+                var visitorLocations = JSON.parse(localStorage.getItem('visitorLocations')) || [];
+                visitorLocations.push({lat: lat, lon: lon, city: city, region: region, country: country});
+                localStorage.setItem('visitorLocations', JSON.stringify(visitorLocations));
+
+                // Add marker for this visitor
+                addMarker(lat, lon, city, country);
+
+                // Add markers for all stored locations
+                visitorLocations.forEach(function(location) {
+                    addMarker(location.lat, location.lon, location.city, location.country);
+                });
+            }, "jsonp");
+
+            function addMarker(lat, lon, city, country) {
                 L.marker([lat, lon]).addTo(map)
                     .bindPopup('Visitor from ' + city + ', ' + country)
                     .openPopup();
-            }, "jsonp");
-
-            // Initialize visit count using localStorage (local device/browser only)
-            var visitCount = localStorage.getItem('visitCount') ? parseInt(localStorage.getItem('visitCount')) : 0;
-            visitCount++;
-            localStorage.setItem('visitCount', visitCount);
-            $('#visitor-count').text('Total Visits: ' + visitCount);
+            }
         });
     </script>
 </body>
