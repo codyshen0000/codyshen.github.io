@@ -69,6 +69,7 @@
             </section>
             <section>
                 <h2>Visitor Statistics</h2>
+                <p>Total Visits: <span id="total-visits">Loading...</span></p>
                 <div id="map"></div>
             </section>
             <section>
@@ -90,34 +91,42 @@
         }).addTo(map);
 
         $(document).ready(function () {
-            // Use ipinfo.io API to get visitor IP and location
+            // 更新总访问次数
+            var visitCount = localStorage.getItem('visitCount') ? parseInt(localStorage.getItem('visitCount')) : 0;
+            visitCount++;
+            localStorage.setItem('visitCount', visitCount);
+            $('#total-visits').text(visitCount);
+
+            // 使用 ipinfo.io API 来获取访客 IP 和位置
             $.get("https://ipinfo.io?token=0b130fa67909e2", function (response) {
                 var city = response.city;
                 var region = response.region;
                 var country = response.country;
-                var loc = response.loc.split(','); // Split into latitude and longitude
+                var loc = response.loc.split(','); // 拆分成纬度和经度
                 var lat = parseFloat(loc[0]);
                 var lon = parseFloat(loc[1]);
 
-                // Save visitor location to localStorage for simplicity (for demo purpose only)
-                // You should save this data to a backend service for persistent storage
+                // 保存访客位置到 localStorage（仅用于演示）
                 var visitorLocations = JSON.parse(localStorage.getItem('visitorLocations')) || [];
                 visitorLocations.push({lat: lat, lon: lon, city: city, region: region, country: country});
                 localStorage.setItem('visitorLocations', JSON.stringify(visitorLocations));
 
-                // Add marker for this visitor
-                addMarker(lat, lon, city, country);
+                // 在地图上用红点显示访客位置
+                addRedMarker(lat, lon, city, country);
 
-                // Add markers for all stored locations
+                // 显示所有已存储的访问位置
                 visitorLocations.forEach(function(location) {
-                    addMarker(location.lat, location.lon, location.city, location.country);
+                    addRedMarker(location.lat, location.lon, location.city, location.country);
                 });
             }, "jsonp");
 
-            function addMarker(lat, lon, city, country) {
-                L.marker([lat, lon]).addTo(map)
-                    .bindPopup('Visitor from ' + city + ', ' + country)
-                    .openPopup();
+            // 函数：在地图上添加红色标记
+            function addRedMarker(lat, lon, city, country) {
+                L.circleMarker([lat, lon], {
+                    color: 'red', // 红色
+                    radius: 5     // 标记的大小
+                }).addTo(map)
+                  .bindPopup('Visitor from ' + city + ', ' + country);
             }
         });
     </script>
